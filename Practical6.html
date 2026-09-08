@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Grade Calculator</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-6">
+
+<div class="w-full max-w-5xl grid md:grid-cols-2 gap-8">
+
+    <!-- Form Section -->
+    <div class="bg-white/10 backdrop-blur-lg border border-white/20 rounded-3xl p-8 shadow-2xl">
+
+        <h1 class="text-4xl font-bold text-center text-white mb-2">
+            🎓 Grade Calculator
+        </h1>
+
+        <p class="text-center text-gray-300 mb-8">
+            Enter Student Information
+        </p>
+
+        <div class="space-y-5">
+
+            <input
+                type="text"
+                id="studentName"
+                placeholder="Student Name"
+                class="w-full p-4 rounded-xl bg-white/10 text-white border border-gray-500 focus:outline-none focus:border-cyan-400"
+            >
+
+            <input
+                type="text"
+                id="rollNumber"
+                placeholder="Roll Number"
+                class="w-full p-4 rounded-xl bg-white/10 text-white border border-gray-500 focus:outline-none focus:border-cyan-400"
+            >
+
+            <input
+                type="number"
+                id="p1"
+                placeholder="Lab Practical 1 Marks"
+                class="w-full p-4 rounded-xl bg-white/10 text-white border border-gray-500 focus:outline-none focus:border-cyan-400"
+            >
+
+            <input
+                type="number"
+                id="p2"
+                placeholder="Lab Practical 2 Marks"
+                class="w-full p-4 rounded-xl bg-white/10 text-white border border-gray-500 focus:outline-none focus:border-cyan-400"
+            >
+
+            <input
+                type="number"
+                id="viva"
+                placeholder="Viva / Oral Marks"
+                class="w-full p-4 rounded-xl bg-white/10 text-white border border-gray-500 focus:outline-none focus:border-cyan-400"
+            >
+
+            <button
+                onclick="calculateResult()"
+                class="w-full p-4 rounded-xl bg-gradient-to-r from-cyan-500 to-purple-600 text-white font-bold text-lg hover:scale-105 transition"
+            >
+                Calculate Result 🚀
+            </button>
+
+        </div>
+
+    </div>
+
+    <!-- Result Section -->
+    <div
+        id="resultCard"
+        class="bg-white text-gray-800 rounded-3xl p-8 shadow-2xl hidden"
+    >
+
+        <h2 class="text-3xl font-bold text-center mb-6">
+            Student Report Card
+        </h2>
+
+        <div class="flex justify-center mb-6">
+            <div id="gradeCircle"
+                 class="w-32 h-32 rounded-full flex items-center justify-center text-white text-4xl font-bold bg-green-500">
+                A+
+            </div>
+        </div>
+
+        <div class="space-y-4 text-lg">
+
+            <div class="flex justify-between">
+                <span>Name</span>
+                <span id="rName" class="font-semibold"></span>
+            </div>
+
+            <div class="flex justify-between">
+                <span>Roll No</span>
+                <span id="rRoll" class="font-semibold"></span>
+            </div>
+
+            <div class="flex justify-between">
+                <span>Total Marks</span>
+                <span id="rTotal" class="font-semibold"></span>
+            </div>
+
+            <div class="flex justify-between">
+                <span>Percentage</span>
+                <span id="rPercentage" class="font-semibold"></span>
+            </div>
+
+        </div>
+
+        <div class="mt-8">
+
+            <div class="flex justify-between mb-2">
+                <span>Performance</span>
+                <span id="progressText">0%</span>
+            </div>
+
+            <div class="w-full h-5 bg-gray-200 rounded-full overflow-hidden">
+
+                <div
+                    id="progressBar"
+                    class="h-full bg-gradient-to-r from-cyan-500 to-purple-600"
+                    style="width:0%"
+                ></div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+function calculateResult() {
+
+    let name = document.getElementById("studentName").value.trim();
+    let roll = document.getElementById("rollNumber").value.trim();
+
+    let p1 = parseFloat(document.getElementById("p1").value);
+    let p2 = parseFloat(document.getElementById("p2").value);
+    let viva = parseFloat(document.getElementById("viva").value);
+
+    if(
+        name === "" ||
+        roll === "" ||
+        isNaN(p1) ||
+        isNaN(p2) ||
+        isNaN(viva)
+    ){
+        alert("Please fill all fields.");
+        return;
+    }
+
+    if(
+        p1 > 100 || p2 > 100 || viva > 100 ||
+        p1 < 0 || p2 < 0 || viva < 0
+    ){
+        alert("Marks must be between 0 and 100.");
+        return;
+    }
+
+    let total = p1 + p2 + viva;
+    let percentage = (total / 300) * 100;
+
+    let grade = "";
+    let color = "";
+
+    if(percentage >= 90){
+        grade = "A+";
+        color = "bg-green-500";
+    }
+    else if(percentage >= 80){
+        grade = "A";
+        color = "bg-blue-500";
+    }
+    else if(percentage >= 70){
+        grade = "B";
+        color = "bg-yellow-500";
+    }
+    else if(percentage >= 60){
+        grade = "C";
+        color = "bg-orange-500";
+    }
+    else if(percentage >= 50){
+        grade = "D";
+        color = "bg-pink-500";
+    }
+    else{
+        grade = "F";
+        color = "bg-red-500";
+    }
+
+    document.getElementById("resultCard").classList.remove("hidden");
+
+    document.getElementById("rName").textContent = name;
+    document.getElementById("rRoll").textContent = roll;
+    document.getElementById("rTotal").textContent = total + " / 300";
+    document.getElementById("rPercentage").textContent =
+        percentage.toFixed(2) + "%";
+
+    document.getElementById("progressText").textContent =
+        percentage.toFixed(2) + "%";
+
+    document.getElementById("progressBar").style.width =
+        percentage + "%";
+
+    let circle = document.getElementById("gradeCircle");
+
+    circle.textContent = grade;
+
+    circle.className =
+        "w-32 h-32 rounded-full flex items-center justify-center text-white text-4xl font-bold " +
+        color;
+}
+
+</script>
+
+</body>
+</html>
