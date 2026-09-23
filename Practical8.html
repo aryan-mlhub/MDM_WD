@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CM25070</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="min-h-screen bg-slate-100 flex items-center justify-center p-5">
+
+    <div class="w-full max-w-4xl bg-white rounded-xl shadow-lg overflow-hidden grid md:grid-cols-2">
+
+        <div class="bg-slate-800 text-white p-8 flex flex-col justify-center">
+            <h1 class="text-3xl font-bold mb-3">Admission Portal</h1>
+            <p class="text-slate-300 mb-6">Student Registration</p>
+
+            <p class="text-slate-300 leading-7">
+                Fill in your details carefully to complete your
+                college admission registration.
+            </p>
+
+            <div class="mt-6 text-sm text-slate-400">
+                All fields are mandatory.
+            </div>
+        </div>
+
+        <div class="p-8">
+            <h2 class="text-2xl font-bold text-slate-700">Registration Form</h2>
+            <div class="w-12 h-1 bg-orange-500 mt-2 mb-6"></div>
+
+            <form id="registrationForm">
+
+                <div class="mb-4">
+                    <label class="block font-semibold text-slate-600 mb-2">
+                        Full Name
+                    </label>
+                    <input id="name" type="text"
+                        placeholder="Enter your full name"
+                        class="w-full p-3 border border-slate-300 rounded-md outline-none focus:border-blue-600">
+                    <p id="nameError" class="text-red-500 text-sm mt-1"></p>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block font-semibold text-slate-600 mb-2">
+                        Email Address
+                    </label>
+                    <input id="email" type="text"
+                        placeholder="example@gmail.com"
+                        class="w-full p-3 border border-slate-300 rounded-md outline-none focus:border-blue-600">
+                    <p id="emailError" class="text-red-500 text-sm mt-1"></p>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block font-semibold text-slate-600 mb-2">
+                        Password
+                    </label>
+                    <input id="password" type="password"
+                        placeholder="Minimum 8 characters"
+                        class="w-full p-3 border border-slate-300 rounded-md outline-none focus:border-blue-600">
+                    <p id="passwordError" class="text-red-500 text-sm mt-1"></p>
+                </div>
+
+                <div class="mb-5">
+                    <label class="block font-semibold text-slate-600 mb-2">
+                        Mobile Number
+                    </label>
+                    <input id="mobile" type="text"
+                        placeholder="10 digit mobile number"
+                        class="w-full p-3 border border-slate-300 rounded-md outline-none focus:border-blue-600">
+                    <p id="mobileError" class="text-red-500 text-sm mt-1"></p>
+                </div>
+
+                <button type="submit"
+                    class="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-md transition">
+                    Submit Registration
+                </button>
+
+                <p id="message" class="text-center font-semibold mt-4"></p>
+
+            </form>
+        </div>
+
+    </div>
+
+    <script>
+        const form = document.getElementById("registrationForm");
+
+        form.addEventListener("submit", function(event) {
+
+            event.preventDefault();
+
+            let name = document.getElementById("name");
+            let email = document.getElementById("email");
+            let password = document.getElementById("password");
+            let mobile = document.getElementById("mobile");
+
+            let valid = true;
+
+            document.querySelectorAll("p[id$='Error']").forEach(p => {
+                p.textContent = "";
+            });
+
+            [name, email, password, mobile].forEach(input => {
+                input.classList.remove("border-red-500", "border-green-500");
+            });
+
+            if (name.value.trim() === "") {
+                document.getElementById("nameError").textContent =
+                    "Name is required";
+                name.classList.add("border-red-500");
+                valid = false;
+            } else {
+                name.classList.add("border-green-500");
+            }
+
+            let emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            if (email.value.trim() === "") {
+                document.getElementById("emailError").textContent =
+                    "Email is required";
+                email.classList.add("border-red-500");
+                valid = false;
+            } else if (!emailPattern.test(email.value.trim())) {
+                document.getElementById("emailError").textContent =
+                    "Enter a valid email";
+                email.classList.add("border-red-500");
+                valid = false;
+            } else {
+                email.classList.add("border-green-500");
+            }
+
+            if (password.value.length < 8) {
+                document.getElementById("passwordError").textContent =
+                    "Password must contain at least 8 characters";
+                password.classList.add("border-red-500");
+                valid = false;
+            } else {
+                password.classList.add("border-green-500");
+            }
+
+            let mobilePattern = /^[0-9]{10}$/;
+
+            if (mobile.value.trim() === "") {
+                document.getElementById("mobileError").textContent =
+                    "Mobile number is required";
+                mobile.classList.add("border-red-500");
+                valid = false;
+            } else if (!mobilePattern.test(mobile.value.trim())) {
+                document.getElementById("mobileError").textContent =
+                    "Enter exactly 10 digits";
+                mobile.classList.add("border-red-500");
+                valid = false;
+            } else {
+                mobile.classList.add("border-green-500");
+            }
+
+            let message = document.getElementById("message");
+
+            if (valid) {
+                message.textContent = "Registration submitted successfully!";
+                message.className = "text-center font-semibold mt-4 text-green-600";
+                form.reset();
+            } else {
+                message.textContent = "";
+            }
+        });
+    </script>
+
+</body>
+</html>
