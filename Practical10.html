@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CM25070</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen">
+<header class="bg-slate-900 text-white">
+  <div class="max-w-6xl mx-auto px-4 py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-3xl font-bold">FindIt</h1>
+      <p class="text-slate-300">Lost something on campus? Found something? Post it here.</p>
+    </div>
+    <div class="flex gap-3 text-center text-sm">
+      <div class="bg-amber-500/20 rounded-lg px-4 py-2"><p id="cLost" class="text-xl font-bold text-amber-300">0</p>Lost</div>
+      <div class="bg-emerald-500/20 rounded-lg px-4 py-2"><p id="cFound" class="text-xl font-bold text-emerald-300">0</p>Found</div>
+      <div class="bg-sky-500/20 rounded-lg px-4 py-2"><p id="cDone" class="text-xl font-bold text-sky-300">0</p>Returned</div>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-6xl mx-auto px-4 py-6 grid gap-6 lg:grid-cols-3">
+  <!-- Report form -->
+  <section class="bg-white rounded-xl border border-slate-200 p-5 h-fit">
+    <h2 class="text-lg font-semibold mb-3">Report an item</h2>
+    <div id="err" class="hidden mb-3 text-sm text-red-700 bg-red-50 rounded p-2"></div>
+    <div id="form" class="space-y-3">
+      <div class="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Report type">
+        <label class="cursor-pointer"><input type="radio" name="type" value="lost" class="peer sr-only" checked>
+          <span class="block text-center rounded-lg border py-2 peer-checked:bg-amber-500 peer-checked:text-white peer-checked:border-amber-500 peer-focus-visible:outline peer-focus-visible:outline-2">I lost it</span></label>
+        <label class="cursor-pointer"><input type="radio" name="type" value="found" class="peer sr-only">
+          <span class="block text-center rounded-lg border py-2 peer-checked:bg-emerald-600 peer-checked:text-white peer-checked:border-emerald-600 peer-focus-visible:outline peer-focus-visible:outline-2">I found it</span></label>
+      </div>
+      <input id="name" maxlength="50" placeholder="Item name (e.g. Black wallet)" class="w-full border rounded-lg px-3 py-2">
+      <select id="cat" class="w-full border rounded-lg px-3 py-2"></select>
+      <input id="loc" maxlength="60" placeholder="Where? (e.g. Library, 2nd floor)" class="w-full border rounded-lg px-3 py-2">
+      <input id="date" type="date" class="w-full border rounded-lg px-3 py-2">
+      <textarea id="desc" rows="2" maxlength="150" placeholder="Colour, brand, marks…" class="w-full border rounded-lg px-3 py-2"></textarea>
+      <input id="contact" maxlength="60" placeholder="Your phone or email" class="w-full border rounded-lg px-3 py-2">
+      <label class="block text-sm text-slate-600">Photo (optional)
+        <input id="photo" type="file" accept="image/*" class="block w-full mt-1 text-sm">
+      </label>
+      <button id="submit" class="w-full bg-slate-900 hover:bg-slate-700 text-white rounded-lg py-2.5 font-medium">Post report</button>
+    </div>
+  </section>
+
+  <!-- Listings -->
+  <section class="lg:col-span-2">
+    <div class="flex flex-col sm:flex-row gap-3 mb-4">
+      <input id="search" placeholder="Search items or locations" class="flex-1 border rounded-lg px-3 py-2 bg-white">
+      <select id="fcat" class="border rounded-lg px-3 py-2 bg-white"></select>
+    </div>
+    <div class="flex gap-2 mb-4" id="tabs">
+      <button data-t="all" class="tab px-4 py-1.5 rounded-full text-sm border">All</button>
+      <button data-t="lost" class="tab px-4 py-1.5 rounded-full text-sm border">Lost</button>
+      <button data-t="found" class="tab px-4 py-1.5 rounded-full text-sm border">Found</button>
+      <button data-t="done" class="tab px-4 py-1.5 rounded-full text-sm border">Returned</button>
+    </div>
+    <div id="grid" class="grid gap-4 sm:grid-cols-2"></div>
+  </section>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const CATS = ["Electronics", "Wallet & Cards", "Keys", "Books & Notes", "Bags", "Clothing", "ID / Documents", "Other"];
+const today = () => new Date().toISOString().slice(0, 10);
+const load = () => { try { return JSON.parse(localStorage.getItem("findit_items")); } catch (e) { return null; } };
+const persist = () => { try { localStorage.setItem("findit_items", JSON.stringify(items)); } catch (e) { alert("Storage is full. Try a smaller photo or delete old posts."); } };
+
+let items = load() || [
+  { id: 1, type: "lost", name: "Blue water bottle", cat: "Other", loc: "Canteen", date: today(), desc: "Steel bottle with a dent near the base.", contact: "student@example.com", photo: "", done: false },
+  { id: 2, type: "found", name: "Scientific calculator", cat: "Electronics", loc: "Lab 3", date: today(), desc: "Casio fx-991, name scratched off.", contact: "9999999999", photo: "", done: false }
+];
+let tab = "all";
+
+CATS.forEach(c => { $("cat").add(new Option(c, c)); });
+$("fcat").add(new Option("All categories", "All"));
+CATS.forEach(c => $("fcat").add(new Option(c, c)));
+$("date").value = today(); $("date").max = today();
+
+function err(m) { $("err").textContent = m; $("err").classList.toggle("hidden", !m); }
+
+// Resize the chosen photo so it fits in localStorage
+function readPhoto(file) {
+  return new Promise(res => {
+    if (!file) return res("");
+    const fr = new FileReader();
+    fr.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const s = Math.min(1, 320 / Math.max(img.width, img.height));
+        const c = document.createElement("canvas");
+        c.width = img.width * s; c.height = img.height * s;
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+        res(c.toDataURL("image/jpeg", 0.6));
+      };
+      img.onerror = () => res("");
+      img.src = fr.result;
+    };
+    fr.readAsDataURL(file);
+  });
+}
+
+async function submit() {
+  const v = id => $(id).value.trim();
+  if (!v("name")) return err("Enter the item name.");
+  if (!v("loc")) return err("Enter where it was lost or found.");
+  if (!v("contact")) return err("Enter a phone number or email so people can reach you.");
+  err("");
+  const photo = await readPhoto($("photo").files[0]);
+  items.unshift({
+    id: Date.now(), type: document.querySelector('input[name="type"]:checked').value,
+    name: v("name"), cat: $("cat").value, loc: v("loc"), date: $("date").value,
+    desc: v("desc"), contact: v("contact"), photo, done: false
+  });
+  ["name", "loc", "desc", "contact", "photo"].forEach(id => $(id).value = "");
+  persist(); render();
+}
+
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+
+function card(it) {
+  const lost = it.type === "lost";
+  const c = el("article", "bg-white rounded-xl border border-slate-200 overflow-hidden flex flex-col " + (it.done ? "opacity-60" : ""));
+  if (it.photo) { const im = el("img", "w-full h-40 object-cover"); im.src = it.photo; im.alt = it.name; c.appendChild(im); }
+  const b = el("div", "p-4 flex-1 flex flex-col gap-2");
+  const top = el("div", "flex items-center justify-between gap-2");
+  top.append(
+    el("span", "text-xs font-semibold px-2 py-1 rounded-full " + (it.done ? "bg-sky-100 text-sky-800" : lost ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"), it.done ? "Returned" : lost ? "Lost" : "Found"),
+    el("span", "text-xs text-slate-500", it.date)
+  );
+  b.append(top, el("h3", "font-semibold text-lg leading-tight", it.name),
+    el("p", "text-sm text-slate-500", it.cat + " • " + it.loc));
+  if (it.desc) b.appendChild(el("p", "text-sm", it.desc));
+
+  const contact = el("p", "hidden text-sm bg-slate-100 rounded p-2 break-words", "Contact: " + it.contact);
+  const row = el("div", "mt-auto pt-2 flex flex-wrap gap-2 text-sm");
+  const show = el("button", "border rounded-lg px-3 py-1.5 hover:bg-slate-100", lost ? "I found this" : "This is mine");
+  show.onclick = () => contact.classList.toggle("hidden");
+  const done = el("button", "border rounded-lg px-3 py-1.5 hover:bg-slate-100", it.done ? "Reopen" : "Mark returned");
+  done.onclick = () => { it.done = !it.done; persist(); render(); };
+  const del = el("button", "ml-auto text-red-700 px-2 py-1.5 hover:underline", "Delete");
+  del.onclick = () => { if (confirm("Delete this post?")) { items = items.filter(x => x.id !== it.id); persist(); render(); } };
+  row.append(show, done, del);
+  b.append(contact, row); c.appendChild(b);
+  return c;
+}
+
+function render() {
+  const open = items.filter(i => !i.done);
+  $("cLost").textContent = open.filter(i => i.type === "lost").length;
+  $("cFound").textContent = open.filter(i => i.type === "found").length;
+  $("cDone").textContent = items.filter(i => i.done).length;
+
+  document.querySelectorAll(".tab").forEach(t => {
+    t.className = "tab px-4 py-1.5 rounded-full text-sm border " + (t.dataset.t === tab ? "bg-slate-900 text-white border-slate-900" : "bg-white");
+  });
+
+  const q = $("search").value.toLowerCase(), fc = $("fcat").value;
+  const list = items.filter(i =>
+    (tab === "done" ? i.done : !i.done && (tab === "all" || i.type === tab)) &&
+    (fc === "All" || i.cat === fc) &&
+    (i.name + " " + i.loc + " " + i.desc).toLowerCase().includes(q));
+
+  const g = $("grid"); g.innerHTML = "";
+  if (!list.length) g.appendChild(el("p", "sm:col-span-2 text-center text-slate-500 py-10", "No items match. Try another filter, or post a report."));
+  list.forEach(i => g.appendChild(card(i)));
+}
+
+$("submit").onclick = submit;
+$("search").oninput = render;
+$("fcat").onchange = render;
+document.querySelectorAll(".tab").forEach(t => t.onclick = () => { tab = t.dataset.t; render(); });
+render();
+</script>
+</body>
+</html>
